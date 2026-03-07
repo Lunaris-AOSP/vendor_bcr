@@ -1,9 +1,3 @@
-## Add In Rom
-
-Add This Line In device.mk
-
-$(call inherit-product, vendor/bcr/bcr.mk)
-
 # Basic Call Recorder
 
 <img src="https://github.com/chenxiaolong/BCR/blob/master/app/images/icon.svg" alt="app icon" width="72" />
@@ -44,7 +38,7 @@ As the name alludes, BCR intends to be a basic as possible. The project will hav
 
 ## Usage
 
-1. Open BCR.
+1. Open BCR
 
     If other call recorders are installed, make sure to disable their phone call recording functionality. On most devices, a phone call cannot be recorded by two apps at the same time. However, it is fine to have BCR record phone calls and another app record eg. VOIP calls.
 
@@ -55,11 +49,6 @@ As the name alludes, BCR intends to be a basic as possible. The project will hav
     When enabling call recording the first time, BCR will prompt for microphone, notification (Android 13+), call log, contacts, and phone permissions. Only microphone and notification permissions are required for basic call recording functionality. If additional permissions are granted, more information is added to the output filename. For example, the contacts permission will allow the contact name to be added to the filename.
 
     See the [permissions section](#permissions) below for more details about the permissions.
-
-3. To install future updates, there are a couple methods:
-
-    * If installed via Magisk, the module can be updated right from Magisk Manager's modules tab. Flashing the new version in Magisk manually also works just as well.
-    * The `.apk` can also be extracted from the zip and be directly installed. With this method, the old version exists as a system app and the new version exists as a user-installed update to the system app. This method is more convenient if BCR is baked into the Android firmware image.
 
 ## Recording announcement
 
@@ -172,6 +161,10 @@ The JSON structure is shown in the following example. Note that only `timestamp_
 
     // The timestamp represented as ISO8601 (+ offset) in the local time zone.
     "timestamp": "2023-07-19T21:53:08.931-04:00",
+
+    // The Android app handling the call. "com.android.phone" is a native
+    // cellular call.
+    "package_name": "com.android.phone",
 
     // The call direction ("in", "out", or "conference").
     // [Android 10+ only]
