@@ -3,7 +3,7 @@
 <img src="https://github.com/chenxiaolong/BCR/blob/master/app/images/icon.svg" alt="app icon" width="72" />
 
 [![latest release badge](https://img.shields.io/github/v/release/chenxiaolong/BCR?sort=semver)](https://github.com/chenxiaolong/BCR/releases/latest)
-[![license badge](https://img.shields.io/github/license/chenxiaolong/BCR)](./LICENSE)
+[![license badge](https://img.shields.io/github/license/chenxiaolong/BCR)](https://github.com/chenxiaolong/BCR/blob/master/LICENSE)
 
 BCR is a simple Android call recording app for rooted devices or devices running custom firmware. Once enabled, it stays out of the way and automatically records incoming and outgoing calls in the background.
 
@@ -13,12 +13,13 @@ BCR is a simple Android call recording app for rooted devices or devices running
 
 * Supports Android 9 and newer
 * Supports output in various formats:
-  * OGG/Opus - Lossy, smallest files, default on Android 10+
+  * OGG/Opus - Lossy, smaller files, default on Android 10+
   * M4A/AAC - Lossy, smaller files, default on Android 9
   * FLAC - Lossless, larger files
   * WAV/PCM - Lossless, largest files, least CPU usage
+  * AMR-WB/AMR-NB - Lossy, smallest files, mono-only
 * Supports stereo recording (separate uplink and downlink channels)
-  * NOTE: This is only known to work on newer Pixel devices
+  * NOTE: This is only known to work on Pixel devices running newer versions of Android. Other devices may have unexpected behavior, such as lack of separation between uplink and downlink or even no audio at all. Try recording test calls before relying on this feature.
 * Supports Android's Storage Access Framework (can record to SD cards, USB devices, etc.)
 * Direct boot aware (records calls prior to first unlock after a reboot)
 * Auto-record rules
@@ -44,11 +45,13 @@ As the name alludes, BCR intends to be a basic as possible. The project will hav
 
 2. Enable call recording and pick an output directory.
 
-    If no output directory is selected or if the output directory is no longer accessible, then recordings will be saved to `/sdcard/Android/data/com.chiller3.bcr/files`. Note that on Android 12+, `/sdcard/Android/data/` is only accessible via USB or DocumentsUI (AOSP's built in file manager).
+    If no output directory is selected or if the output directory is no longer accessible, then recordings will be saved to `/sdcard/Android/data/com.chiller3.bcr/files`. Note that on Android 12+, `/sdcard/Android/data/` is only accessible via USB or DocumentsUI (AOSP's built in file manager). The output directory can be opened in the system file manager by long pressing the output directory setting.
 
     When enabling call recording the first time, BCR will prompt for microphone, notification (Android 13+), call log, contacts, and phone permissions. Only microphone and notification permissions are required for basic call recording functionality. If additional permissions are granted, more information is added to the output filename. For example, the contacts permission will allow the contact name to be added to the filename.
 
     See the [permissions section](#permissions) below for more details about the permissions.
+
+    Also, disable any AI-related functionality in the dialer app. These features also rely on Android's call recording APIs
 
 ## Recording announcement
 
@@ -220,29 +223,28 @@ The JSON structure is shown in the following example. Note that only `timestamp_
             "parameter_type": "bitrate",
 
             // The encoder quality/size parameter.
-            "parameter": 48000,
+            "parameter": 48000
         },
 
         // Details about the recording and encoding process. If the recording
         // process fails, this is set to null.
         "recording": {
             // The total number of audio frames that BCR read from the audio
-            // device. This includes the periods of time when the recording was
-            // paused or on hold.
-            // (Number of frames == number of samples * channel count)
-            "frames_total": 96000,
+            // device. A frame is defined as a bundle of samples, with one
+            // sample per channel. This value includes the periods of time where
+            // the recording was paused or on hold.
+            "frames_total": 40000,
 
             // The number of audio frames that were actually saved to the output
-            // file. This excludes the periods of time when the recording was
-            // paused or on hold.
-            // (Number of frames == number of samples * channel count)
-            "frames_encoded": 48000,
+            // file. A frame is defined as a bundle of samples, with one sample
+            // per channel. This value excludes the periods of time where the
+            // recording was paused or on hold.
+            "frames_encoded": 32000,
 
             // The number of samples per second of audio.
-            "sample_rate": 48000,
+            "sample_rate": 16000,
 
-            // The number of channels in the audio. This is currently always 1
-            // because no device supports stereo call audio.
+            // The number of channels in the audio.
             "channel_count": 1,
 
             // The total wall time from when the recording process began to when
@@ -251,21 +253,22 @@ The JSON structure is shown in the following example. Note that only `timestamp_
             "duration_secs_wall": 3.0,
 
             // The total time in seconds that BCR read from the audio device.
-            // (Equal to: frames_total / sample_rate / channel_count)
-            "duration_secs_total": 2.0,
+            // (Equal to: frames_total / sample_rate)
+            "duration_secs_total": 2.5,
 
             // The time in seconds of audio actually saved to the output file.
-            // (Equal to: frames_encoded / sample_rate / channel_count)
-            "duration_secs_encoded": 1.0,
+            // (Equal to: frames_encoded / sample_rate)
+            "duration_secs_encoded": 2.0,
 
             // The size of the recording buffer in frames. This is the maximum
             // number of audio frames read from the audio driver before it is
             // passed to the audio encoder.
-            "buffer_frames": 640,
+            "buffer_frames": 3840,
 
             // The number of buffer overruns. This is the number of times that
             // the CPU or storage couldn't keep up while encoding the raw audio,
-            // resulting in skips (loss of audio).
+            // resulting in skips (loss of audio). This value cannot be
+            // calculated accurately and is just an estimate.
             "buffer_overruns": 0,
 
             // Whether the call was ever paused by the user.
@@ -316,4 +319,4 @@ If you are interested in implementing a new feature and would like to see it inc
 
 ## License
 
-BCR is licensed under GPLv3. Please see [`LICENSE`](./LICENSE) for the full license text.
+BCR is licensed under GPLv3. Please see [`LICENSE`](https://github.com/chenxiaolong/BCR/blob/master/LICENSE) for the full license text.
