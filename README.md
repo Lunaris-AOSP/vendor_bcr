@@ -1,3 +1,9 @@
+## Adding in ROM
+
+Add This Line In device.mk
+
+`$(call inherit-product, vendor/bcr/bcr.mk)`
+
 # Basic Call Recorder
 
 <img src="https://github.com/chenxiaolong/BCR/blob/master/app/images/icon.svg" alt="app icon" width="72" />
