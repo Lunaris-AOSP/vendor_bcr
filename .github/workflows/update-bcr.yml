@@ -1,0 +1,57 @@
+name: Auto-update BCR
+
+on:
+  schedule:
+    # 10:00 AM Eastern Time is 14:00 UTC (during Daylight Saving Time)
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-bcr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Fetch latest release and extract files
+        id: update
+        run: |
+          # Fetch the latest release info from GitHub API
+          LATEST_RELEASE=$(curl -sL https://api.github.com/repos/chenxiaolong/BCR/releases/latest)
+          
+          # Extract the version tag
+          VERSION_TAG=$(echo "$LATEST_RELEASE" | jq -r '.tag_name')
+          
+          # Remove leading 'v' if present for a cleaner version string
+          VERSION=${VERSION_TAG#v}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          
+          # Find the zip asset download URL
+          DOWNLOAD_URL=$(echo "$LATEST_RELEASE" | jq -r '.assets[] | select(.name | endswith(".zip")) | .browser_download_url' | head -n 1)
+          
+          if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" = "null" ]; then
+            echo "Error: Could not find the release zip URL."
+            exit 1
+          fi
+          
+          echo "Downloading from $DOWNLOAD_URL"
+          curl -sL -o bcr_release.zip "$DOWNLOAD_URL"
+          
+          # Create target directories
+          mkdir -p prebuilts/product/priv-app
+          mkdir -p prebuilts/product/etc/permissions
+          
+          # Unzip the required files directly to their destination
+          unzip -p bcr_release.zip system/priv-app/com.chiller3.bcr/app-release.apk > prebuilts/product/priv-app/bcr.apk
+          unzip -p bcr_release.zip system/etc/permissions/privapp-permissions-com.chiller3.bcr.xml > prebuilts/product/etc/permissions/privapp-permissions-com.chiller3.bcr.xml
+          
+          # Clean up the downloaded zip
+          rm bcr_release.zip
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "BCR: Auto-update to version ${{ steps.update.outputs.version }}"
+          file_pattern: "prebuilts/*"
